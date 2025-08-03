@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Clipboard{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="mt-2">
+        <span id="save-status" class="ms-3"></span>
+    </div>
+    <h2>Welcome, {{ username }}!</h2>
+    <div class="mb-3 d-flex gap-2">
+        <button type="button" class="btn btn-success" id="save-btn">Save</button>
+        <button type="button" class="btn btn-secondary" id="load-btn">Load</button>
+        <button type="button" class="btn btn-warning" id="clear-btn">Clear</button>
+        <button type="button" class="btn btn-info" id="copy-btn">Copy to Clipboard</button>
+    </div>
+    <form id="clipboard-form" method="POST">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.content.label(class="form-label") }}
+            {{ form.content(class="form-control", rows=20, style="font-family:monospace;", id="content") }}
+        </div>
+    </form>
+    <div class="mt-2">
+        <small>Last Saved: {{ last_saved }}</small>
+    </div>
+</div>
+<script>
+    document.getElementById('save-btn').onclick = function() {
+        const form = document.getElementById('clipboard-form');
+        const formData = new FormData(form);
+        fetch('/clipboard', {method: 'POST', body: formData}).then(r => {
+            document.getElementById('save-status').textContent = 'Clipboard saved!';
+            setTimeout(() => { document.getElementById('save-status').textContent = ''; }, 3000);
+        });
+    };
+    document.getElementById('load-btn').onclick = function() {
+        fetch('/clipboard/load').then(r => r.json()).then(data => {
+            document.getElementById('content').value = data.content;
+            document.getElementById('save-status').textContent = 'Loaded!';
+            setTimeout(() => { document.getElementById('save-status').textContent = ''; }, 3000);
+        });
+    };
+    document.getElementById('clear-btn').onclick = function() {
+        document.getElementById('content').value = '';
+        document.getElementById('save-status').textContent = 'Cleared!';
+        setTimeout(() => { document.getElementById('save-status').textContent = ''; }, 3000);
+    };
+    document.getElementById('copy-btn').onclick = function() {
+        navigator.clipboard.writeText(document.getElementById('content').value);
+        document.getElementById('save-status').textContent = 'Copied!';
+        setTimeout(() => { document.getElementById('save-status').textContent = ''; }, 3000);
+    };
+</script>
+{% endblock %}
