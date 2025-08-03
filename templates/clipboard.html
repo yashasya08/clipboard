@@ -1,27 +1,33 @@
 {% extends 'base.html' %}
 {% block title %}Clipboard{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <div class="mt-2">
+<div class="row justify-content-center">
+  <div class="col-lg-12 col-xl-12">
+    <div class="card shadow-lg border-0 mt-4">
+      <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+        <span class="fw-bold"><i class="bi bi-person-circle me-2"></i>Welcome, {{ username }}!</span>
         <span id="save-status" class="ms-3"></span>
-    </div>
-    <h2>Welcome, {{ username }}!</h2>
-    <div class="mb-3 d-flex gap-2">
-        <button type="button" class="btn btn-success" id="save-btn">Save</button>
-        <button type="button" class="btn btn-secondary" id="load-btn">Load</button>
-        <button type="button" class="btn btn-warning" id="clear-btn">Clear</button>
-        <button type="button" class="btn btn-info" id="copy-btn">Copy to Clipboard</button>
-    </div>
-    <form id="clipboard-form" method="POST">
-        {{ form.hidden_tag() }}
-        <div class="mb-3">
-            {{ form.content.label(class="form-label") }}
-            {{ form.content(class="form-control", rows=20, style="font-family:monospace;", id="content") }}
+      </div>
+      <div class="card-body bg-light">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button type="button" class="btn btn-success" id="save-btn"><i class="bi bi-save me-1"></i>Save</button>
+          <button type="button" class="btn btn-secondary" id="load-btn"><i class="bi bi-arrow-clockwise me-1"></i>Load</button>
+          <button type="button" class="btn btn-warning" id="clear-btn"><i class="bi bi-eraser me-1"></i>Clear</button>
+          <button type="button" class="btn btn-info text-white" id="copy-btn"><i class="bi bi-clipboard-check me-1"></i>Copy</button>
         </div>
-    </form>
-    <div class="mt-2">
-        <small>Last Saved: {{ last_saved }}</small>
+        <form id="clipboard-form" method="POST">
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            {{ form.content.label(class="form-label fw-semibold") }}
+            {{ form.content(class="form-control rounded-3 p-3", rows=16, style="font-family:monospace; font-size:1.1rem; background:#f8fafc;", id="content") }}
+          </div>
+        </form>
+        <div class="text-end">
+          <small class="text-muted">Last Saved: {{ last_saved }}</small>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 <script>
     document.getElementById('save-btn').onclick = function() {

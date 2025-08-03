@@ -1,3 +1,38 @@
-body { background: #f8f9fa; }
-textarea { font-family: monospace; font-size: 1rem; }
-#save-status { font-weight: bold; }
+body {
+  background: #f8fafc;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+}
+.card {
+  border-radius: 1rem;
+}
+.card-header {
+  border-radius: 1rem 1rem 0 0;
+}
+.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13,110,253,.15);
+}
+#save-status {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #fffbe7;
+  text-shadow: 0 1px 2px #0002;
+}
+.btn-info {
+  background: #0dcaf0;
+  border: none;
+}
+.btn-info:hover {
+  background: #31d2f2;
+}
+.btn-warning {
+  color: #fff;
+}
+.navbar-brand {
+  letter-spacing: 1px;
+  font-size: 1.3rem;
+}
+.footer {
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
