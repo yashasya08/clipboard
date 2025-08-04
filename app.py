@@ -7,7 +7,13 @@ from datetime import datetime
 import bcrypt
 from config import Config
 from models import db, User, Clipboard
+from models import db, User, Clipboard, FileShare
 from forms import RegistrationForm, LoginForm, ClipboardForm
+from forms import FileShareForm
+import shutil
+from werkzeug.utils import secure_filename
+from datetime import timedelta
+from flask import send_file
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -30,14 +36,22 @@ def index():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        existing_user = User.query.filter_by(username=form.username.data).first()
+        userid = form.userid.data.strip().lower()
+        if not userid or '@' in userid or '.' in userid:
+            flash('Enter only your Cognizant UserID (no @ or domain).', 'danger')
+            return render_template('register.html', form=form)
+        email = f"{userid}@cognizant.com"
+        existing_user = User.query.filter_by(username=userid).first()
         if existing_user:
-            flash('Username already exists. Please choose another.', 'danger')
+            flash('UserID already exists. Please login or use a different Cognizant account.', 'danger')
             return render_template('register.html', form=form)
         hashed = bcrypt.hashpw(form.password.data.encode('utf-8'), bcrypt.gensalt())
-        user = User(username=form.username.data, password_hash=hashed.decode('utf-8'))
+        user = User(username=userid, password_hash=hashed.decode('utf-8'))
         db.session.add(user)
         db.session.commit()
+        # Create user folder (if not exists)
+        user_folder = os.path.join(os.path.dirname(__file__), 'uploads', userid)
+        os.makedirs(user_folder, exist_ok=True)
         # Create empty clipboard for new user
         clipboard = Clipboard(user_id=user.id, content='')
         db.session.add(clipboard)
@@ -93,5 +107,70 @@ if __name__ == '__main__':
         db.create_all()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+# --- FILESHARE FEATURE ---
+import pathlib
+@app.route('/fileshare', methods=['GET', 'POST'])
+@login_required
+def fileshare():
+    form = FileShareForm()
+    upload_folder = os.path.join(os.path.dirname(__file__), 'uploads', str(current_user.id))
+    os.makedirs(upload_folder, exist_ok=True)
+
+    # Clean up expired files
+    now = datetime.utcnow()
+    expired_files = FileShare.query.filter(FileShare.user_id==current_user.id, FileShare.expiry_time < now).all()
+    for ef in expired_files:
+        try:
+            if os.path.exists(ef.filepath):
+                os.remove(ef.filepath)
+        except Exception:
+            pass
+        db.session.delete(ef)
+    db.session.commit()
+
+    if form.validate_on_submit() and 'file' in request.files:
+        files = request.files.getlist('file')
+        uploaded = 0
+        for file in files:
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                save_path = os.path.join(upload_folder, filename)
+                file.save(save_path)
+                expiry_time = datetime.utcnow() + timedelta(hours=24)
+                fs = FileShare(user_id=current_user.id, filename=filename, filepath=save_path, expiry_time=expiry_time)
+                db.session.add(fs)
+                uploaded += 1
+        if uploaded:
+            db.session.commit()
+            flash(f'{uploaded} file(s) uploaded successfully!', 'success')
+            return redirect(url_for('fileshare'))
+
+    # List files
+    files = FileShare.query.filter_by(user_id=current_user.id).order_by(FileShare.upload_time.desc()).all()
+    return render_template('fileshare.html', form=form, files=files)
+
+@app.route('/fileshare/download/<int:file_id>')
+@login_required
+def download_file(file_id):
+    file = FileShare.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
+    if file.expiry_time < datetime.utcnow():
+        flash('File has expired.', 'danger')
+        return redirect(url_for('fileshare'))
+    return send_file(file.filepath, as_attachment=True, download_name=file.filename)
+
+@app.route('/fileshare/delete/<int:file_id>', methods=['POST'])
+@login_required
+def delete_file(file_id):
+    file = FileShare.query.filter_by(id=file_id, user_id=current_user.id).first_or_404()
+    try:
+        if os.path.exists(file.filepath):
+            os.remove(file.filepath)
+    except Exception:
+        pass
+    db.session.delete(file)
+    db.session.commit()
+    flash('File deleted.', 'info')
+    return redirect(url_for('fileshare'))
 
 # For Render/Gunicorn: just expose 'app' (no need for main block)

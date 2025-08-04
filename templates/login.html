@@ -1,20 +1,28 @@
 {% extends 'base.html' %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h2>Login</h2>
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <div class="mb-3">
-            {{ form.username.label(class="form-label") }}
-            {{ form.username(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            {{ form.password.label(class="form-label") }}
-            {{ form.password(class="form-control") }}
-        </div>
-        <button type="submit" class="btn btn-primary">Login</button>
-        <a href="{{ url_for('register') }}" class="btn btn-link">Register</a>
-    </form>
+<div class="row justify-content-center align-items-center min-vh-100">
+  <div class="col-md-7 col-lg-5">
+    <div class="card shadow-lg border-0">
+      <div class="card-header bg-primary text-white text-center py-3">
+        <h3 class="mb-0 fw-bold"><i class="bi bi-box-arrow-in-right me-2"></i>Login</h3>
+      </div>
+      <div class="card-body bg-light p-4">
+        <form method="POST" autocomplete="off">
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            {{ form.username.label(class="form-label fw-semibold") }}
+            {{ form.username(class="form-control form-control-lg", placeholder="Enter your Cognizant UserID") }}
+          </div>
+          <div class="mb-3">
+            {{ form.password.label(class="form-label fw-semibold") }}
+            {{ form.password(class="form-control form-control-lg", placeholder="Enter password") }}
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg w-100 mb-2"><i class="bi bi-box-arrow-in-right"></i> Login</button>
+          <a href="{{ url_for('register') }}" class="btn btn-link w-100">Don't have an account? Register</a>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
